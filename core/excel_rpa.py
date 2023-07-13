@@ -1,7 +1,7 @@
 from RPA.Excel.Files import Files
 
-class Excel_RPA():
 
+class Excel_RPA:
     def __init__(self):
         self.excel_file = Files()
 
