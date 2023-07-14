@@ -6,11 +6,8 @@ class Locators_NYT():
     
     #Basic Search
     ICON_BASIC_SEARCH = '//*[@data-test-id="search-button"]'
-    ICON_BASIC_SEARCH_MOBILE = '//*[@data-testid="nav-button"]'
     TXT_BASIC_SEARCH = '//input[@data-testid="search-input"]'
-    TXT_BASIC_SEARCH_MOBILE = TXT_BASIC_SEARCH
     BTN_BASIC_SEARCH = '//*[@data-test-id="search-submit"]'
-    BTN_BASIC_SEARCH_MOBILE = BTN_BASIC_SEARCH
 
     #Advanced Search
     #Dates
@@ -37,7 +34,7 @@ class Locators_NYT():
 
     #Expand
     BTN_EXP_RSLT = '//button[@data-testid="search-show-more-button"]'
-#//*[@id="site-content"]/div/div[2]/div[2]/ol/li[1]/div/div/div/a/h4
+
     #news
     LIST_NEWS_CONTAINER = '//ol[@data-testid="search-results"]/li[@data-testid="search-bodega-result"]'
     DATE_NEWS = 'css:div > span'

@@ -36,42 +36,36 @@ def main():
 
         # RPA NYT To collect news
         nyt_rpa = NYT_RPA(
-            timeout=60, speed=2, auto_close=True, screenshot_directory="output", **config
+            timeout=60, speed=3, auto_close=True, screenshot_directory="output", **config
         )
-        collected_news = nyt_rpa.get_news_from(search_phrase, max_retries=3)
-        if (
-            collected_news is not None
-            and isinstance(collected_news, int)
-            and collected_news == 2
-        ):
-            helpers.logger.info("Empty search, with the current parameters.")
-            return
-
-        # collected_news = helpers.get_test_data()
-        if (
-            collected_news is not None
-            and isinstance(collected_news, list)
-            and len(collected_news) > 0
-        ):
-            # RPA to write collections in Excel file
-            excel_rpa = Excel_RPA()
-            filename = helpers.clean_string_for_filename(
-                start_date
-                + " "
-                + end_date
-                + " "
-                + search_phrase
-                + " "
-                + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            )
-            folder_path = "output"
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            excel_rpa.save_collection(
-                name=folder_path + "/" + filename + ".xlsx", collection=collected_news
-            )
+        collected_news, success = nyt_rpa.get_news_from(search_phrase, max_retries=3)
+        #success = True
+        #collected_news = helpers.get_test_data()
+        if success:
+            #If success, news can be empty or a list of news.
+            if collected_news:
+                # RPA to write collections in Excel file
+                excel_rpa = Excel_RPA()
+                filename = helpers.clean_string_for_filename(
+                    start_date
+                    + " "
+                    + end_date
+                    + " "
+                    + search_phrase
+                    + " "
+                    + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                )
+                folder_path = "output"
+                if not os.path.exists(folder_path):
+                    os.makedirs(folder_path)
+                excel_rpa.save_collection(
+                    name=folder_path + "/" + filename + ".xlsx", collection=collected_news
+                )
+            else:
+                helpers.logger.info("Empty search, with the current parameters.")
         else:
-            helpers.logger.error("Empty result. Possible error with website.")
+            #If not success, means something was wrong.
+            helpers.logger.error("Exit with error.")
     except Exception as e:
         # Other errors.
         helpers.logger.critical(e)

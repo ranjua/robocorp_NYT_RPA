@@ -38,13 +38,13 @@ class NYT_RPA:
     def get_news_from(self, search_phrase: str, max_retries=3):
         if search_phrase is None or search_phrase == "":
             helpers.logger.error("search_phrase cannot be empty.")
-            return None
+            return None, False
         if self.start_date is None or self.start_date == "":
             helpers.logger.error("start_date cannot be empty.")
-            return None
+            return None, False
         if self.end_date is None or self.end_date == "":
             helpers.logger.error("end_date cannot be empty.")
-            return None
+            return None, False
 
         # Retry strategy
         retry_count = 0
@@ -52,13 +52,14 @@ class NYT_RPA:
             try:
                 self.open_the_website(self.init_url)
                 self.basic_search(search_phrase)
-                if self.set_parameters_for_search(
+                results_found = self.set_parameters_for_search(
                     self.start_date, self.end_date, self.sections, self.types
-                ) == 2:
-                    return 2  # Empty result
+                )
+                if results_found == False:
+                    return None, True  # Empty result
                 self.sort_news(self.sort_by)
                 self.expand_result()
-                return self.extract_info(search_phrase)
+                return self.extract_info(search_phrase), True
             except Exception as e:
                 self.close_browser()
                 helpers.logger.error(e)
@@ -66,7 +67,8 @@ class NYT_RPA:
                 helpers.logger.info(f"Retrying: ({retry_count}/{max_retries})")
                 retry_count += 1
         if retry_count >= max_retries:
-            helpers.logger.error("Max retries exceeded. Unable to download the image.")
+            helpers.logger.error("Max retries exceeded. Unable to retrieve news.")
+            return None, False
 
 
     def open_the_website(self, url: str):
@@ -76,10 +78,9 @@ class NYT_RPA:
         chrome_options.add_argument("--disable-features=CSSLayoutNG")
         chrome_options.add_argument("--disable-popup-blocking")
 
-        self.browser.open_available_browser(url, options=chrome_options)
+        self.browser.open_available_browser(url)
         self.browser.wait_until_page_contains_element(Locators_NYT.ICON_PAGE_LOADED)
         try:
-            time.sleep(5)
             self.browser.wait_and_click_button(Locators_NYT.GDPR_REJECT)
         except:
             pass
@@ -95,15 +96,6 @@ class NYT_RPA:
             self.browser.click_button_when_visible(Locators_NYT.BTN_BASIC_SEARCH)
             self.browser.wait_until_page_contains_element(Locators_NYT.BTN_ADV_DATE)
             return True
-        elif self.browser.does_page_contain_element(Locators_NYT.ICON_BASIC_SEARCH_MOBILE):
-            # mobile version
-            self.browser.click_element(Locators_NYT.ICON_BASIC_SEARCH)
-            self.browser.input_text_when_element_is_visible(
-                Locators_NYT.TXT_BASIC_SEARCH_MOBILE, search_phrase
-            )
-            self.browser.click_button_when_visible(Locators_NYT.BTN_BASIC_SEARCH_MOBILE)
-            self.browser.wait_until_page_contains_element(Locators_NYT.BTN_ADV_DATE_MOBILE)
-            return True
         else:
             raise Exception("basic_search not found.")
 
@@ -114,16 +106,14 @@ class NYT_RPA:
 
         helpers.logger.info(start_date)
         helpers.logger.info(end_date)
-        time.sleep(1)
+
         self.browser.input_text_when_element_is_visible(Locators_NYT.TXT_ADV_START_DATE, start_date)
         self.browser.input_text_when_element_is_visible(Locators_NYT.TXT_ADV_END_DATE, end_date)
         self.browser.press_keys(Locators_NYT.TXT_ADV_END_DATE, "ENTER")
 
-        time.sleep(1)
         if self.browser.is_element_enabled(Locators_NYT.BTN_ADV_SECTION):
             helpers.logger.info(sections)
             if sections and len(sections) > 0:
-                time.sleep(1)
                 self.browser.click_button_when_visible(Locators_NYT.BTN_ADV_SECTION)
                 self.browser.wait_until_element_is_visible(Locators_NYT.LIST_ADV_SECTION)
                 for section in sections:
@@ -131,11 +121,9 @@ class NYT_RPA:
                     if self.browser.does_page_contain_element(loc):
                         self.browser.select_checkbox(loc)
 
-        time.sleep(1)
         if self.browser.is_element_enabled(Locators_NYT.BTN_ADV_TYPE):
             helpers.logger.info(types)
             if types and len(types) > 0:
-                time.sleep(1)
                 self.browser.click_button_when_visible(Locators_NYT.BTN_ADV_TYPE)
                 self.browser.wait_until_element_is_visible(Locators_NYT.LIST_ADV_TYPE)
                 for element in types:
@@ -143,10 +131,10 @@ class NYT_RPA:
                     if self.browser.does_page_contain_element(loc):
                         self.browser.select_checkbox(loc)
 
-        time.sleep(1)
+        time.sleep(2)
         helpers.logger.info(self.browser.find_element(Locators_NYT.LBL_RESULTS).text)
         if "Showing 0 results for:" in self.browser.find_element(Locators_NYT.LBL_RESULTS).text:
-            return 2
+            return False
 
         return True
 

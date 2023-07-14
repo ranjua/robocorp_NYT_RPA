@@ -15,12 +15,8 @@ class Excel_RPA:
 
     def write_collection(self, collection):
         # Set the headers
-        headers = list(collection[0].keys())
-        # Write the headers to the worksheet
-        for col, header in enumerate(headers, start=1):
-            self.excel_file.set_cell_value(row=1, column=col, value=header)
+        headers = [list(collection[0].keys())]
+        data_values = [list(d.values()) for d in collection]
 
-        # Writing to the worksheet
-        for row, news in enumerate(collection, start=2):
-            for col, value in enumerate(news.values(), start=1):
-                self.excel_file.set_cell_value(row=row, column=col, value=value)
+        self.excel_file.set_cell_values("A1", headers)
+        self.excel_file.set_cell_values("A2", data_values)
