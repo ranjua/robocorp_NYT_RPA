@@ -110,7 +110,7 @@ class NYT_RPA:
         self.browser.input_text_when_element_is_visible(Locators_NYT.TXT_ADV_START_DATE, start_date)
         self.browser.input_text_when_element_is_visible(Locators_NYT.TXT_ADV_END_DATE, end_date)
         self.browser.press_keys(Locators_NYT.TXT_ADV_END_DATE, "ENTER")
-
+    
         if self.browser.is_element_enabled(Locators_NYT.BTN_ADV_SECTION):
             helpers.logger.info(sections)
             if sections and len(sections) > 0:
@@ -131,9 +131,9 @@ class NYT_RPA:
                     if self.browser.does_page_contain_element(loc):
                         self.browser.select_checkbox(loc)
 
-        time.sleep(2)
-        helpers.logger.info(self.browser.find_element(Locators_NYT.LBL_RESULTS).text)
-        if "Showing 0 results for:" in self.browser.find_element(Locators_NYT.LBL_RESULTS).text:
+        showing_results = self.browser.find_element(Locators_NYT.LBL_RESULTS).text
+        helpers.logger.info(showing_results)
+        if "Showing 0 results" in showing_results:
             return False
 
         return True
@@ -153,7 +153,6 @@ class NYT_RPA:
 
         while self.browser.does_page_contain_button(Locators_NYT.BTN_EXP_RSLT):
             self.browser.click_button_when_visible(Locators_NYT.BTN_EXP_RSLT)
-            time.sleep(2)
             try:
                 self.browser.wait_until_page_contains_element(Locators_NYT.BTN_EXP_RSLT, timeout=3)
             except Exception:
@@ -187,7 +186,7 @@ class NYT_RPA:
             except ElementNotFound:
                 picture_filename = "Not found."
 
-            # Calculated
+            # Calculated fields
             count_search_phrase = helpers.count_search_phrase(search_phrase, title + " " + description)
             contains_money = helpers.contains_money(title + " " + description)
 
@@ -206,6 +205,7 @@ class NYT_RPA:
 
 
     def find_element_safe(self, locator, parent):
+        #Function to return "Not found" when element is not present.
         try:
             web_element = self.browser.find_element(locator=locator, parent=parent)
             return web_element.text
