@@ -77,8 +77,10 @@ class NYT_RPA:
         chrome_options.add_argument("--blink-settings=imagesEnabled=false")
         chrome_options.add_argument("--disable-features=CSSLayoutNG")
         chrome_options.add_argument("--disable-popup-blocking")
+        chrome_options.page_load_strategy = 'eager'
 
-        self.browser.open_available_browser(url)
+        self.browser.open_available_browser(url, options=chrome_options)
+        #To check the website loaded correctly
         self.browser.wait_until_page_contains_element(Locators_NYT.ICON_PAGE_LOADED)
         try:
             self.browser.wait_and_click_button(Locators_NYT.GDPR_REJECT)
@@ -147,12 +149,27 @@ class NYT_RPA:
 
     def expand_result(self):
         try:
-            self.browser.wait_until_page_contains_element(Locators_NYT.BTN_EXP_RSLT, timeout=3)
+            self.browser.wait_until_page_contains_element(Locators_NYT.BTN_EXP_RSLT, timeout=5)
         except Exception:
             return True
-
+        previous_news = 0
+        current_news = 0
         while self.browser.does_page_contain_button(Locators_NYT.BTN_EXP_RSLT):
             self.browser.click_button_when_visible(Locators_NYT.BTN_EXP_RSLT)
+            # Strategy to verify if the diplayed news increase, sometimes it can get stuck. Network slow or server slow.
+            time.sleep(1) # Default time to wait before check if news were loaded.
+            current_news = len(self.browser.find_elements(Locators_NYT.LIST_NEWS_CONTAINER))
+            max_tries = 10
+            while current_news <= previous_news:
+                helpers.logger.debug("Waiting...")
+                time.sleep(5)
+                current_news = len(self.browser.find_elements(Locators_NYT.LIST_NEWS_CONTAINER))
+                helpers.logger.debug(current_news)
+                helpers.logger.debug(previous_news)
+                if max_tries == 0:
+                    return True
+                max_tries -= 1
+            previous_news = current_news
             try:
                 self.browser.wait_until_page_contains_element(Locators_NYT.BTN_EXP_RSLT, timeout=3)
             except Exception:
